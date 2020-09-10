@@ -689,13 +689,13 @@ impl SinkBase {
     #[inline]
     fn poll_ready(&mut self, cx: &mut Context) -> Poll<Result<()>> {
         match &mut self.batch_f {
-            None => return Poll::Ready(Ok(())),
+            None => Poll::Ready(Ok(())),
             Some(f) => {
-                ready!(Pin::new(f).poll(cx)?);
+                let res = ready!(Pin::new(f).poll(cx)).map(|_| ());
+                self.batch_f.take();
+                Poll::Ready(res)
             }
         }
-        self.batch_f.take();
-        Poll::Ready(Ok(()))
     }
 
     #[inline]
